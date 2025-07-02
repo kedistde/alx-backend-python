@@ -39,3 +39,20 @@ def lazy_paginate(page_size):
         for row in page:
             yield row
         offset += page_size
+def stream_users_in_batches(batch_size):
+    """
+    Generator yielding batches of rows from user_data.
+    """
+    conn = mysql.connector.connect(
+        host=HOST, user=USER, password=PASSWORD, database=DB
+    )
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute(f"SELECT user_id, name, email, age FROM {TABLE}")
+    # Loop #1: fetch in batches using fetchmany()
+    while True:
+        batch = cursor.fetchmany(batch_size)
+        if not batch:
+            break
+        yield batch
+    cursor.close()
+    conn.close()
