@@ -16,7 +16,16 @@ def paginate_users(page_size, offset):
     cursor.close()
     conn.close()
     return rows
-
+def batch_processing(batch_size):
+    """
+    Generator: processes batches from stream, yielding users over age > 25.
+    """
+    # Loop 2: iterate through batches
+    for batch in stream_users_in_batches(batch_size):
+        # Loop 3: process each user in batch
+        for user in batch:
+            if user['age'] > 25:  # filter for age over 25
+                yield user
 def lazy_paginate(page_size):
     """
     Generator that lazily fetches pages and yields rows one at a time.
