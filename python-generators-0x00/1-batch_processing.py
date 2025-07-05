@@ -21,7 +21,7 @@ def stream_users_in_batches(batch_size):
         yield batch
     cursor.close()
     conn.close()
-
+ return (total, count)
 def batch_processing(batch_size):
     """
     Generator: filters users over age 25 from each batch.
@@ -37,4 +37,4 @@ if __name__ == "__main__":
     for user in batch_processing(batch_size=50):
         print(user)
 
-,bkv
+
