@@ -1,26 +1,28 @@
-#!/usr/bin/env python3
-import uuid
-import csv
-import mysql.connector
-from mysql.connector import errorcode
+#!/usr/bin/python3
 
-HOST = "localhost"
-USER = "root"
-PASSWORD = ""  # or your password
-DB_NAME = "ALX_prodev"
-TABLE_NAME = "user_data"
-CSV_FILE = "user_data.csv"
+seed = __import__('seed')
 
-def connect_db():
-    return mysql.connector.connect(
-        host=HOST, user=USER, password=PASSWORD
-    )
+connection = seed.connect_db()
+if connection:
+    seed.create_database(connection)
+    connection.close()
+    print(f"connection successful")
 
-def create_database(conn):
-    cursor = conn.cursor()
-    cursor.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME}")
-    conn.database = DB_NAME
-    cursor.close()
+    connection = seed.connect_to_prodev()
+
+    if connection:
+        seed.create_table(connection)
+        seed.insert_data(connection, 'user_data.csv')
+        cursor = connection.cursor()
+        cursor.execute(f"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'ALX_prodev';")
+        result = cursor.fetchone()
+        if result:
+            print(f"Database ALX_prodev is present ")
+        cursor.execute(f"SELECT * FROM user_data LIMIT 5;")
+        rows = cursor.fetchall()
+        print(rows)
+        cursor.close()
+
 
 def connect_to_prodev():
     return mysql.connector.connect(
