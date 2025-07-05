@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import sys
 seed = __import__('seed')
 
 
@@ -9,3 +10,15 @@ def paginate_users(page_size, offset):
     rows = cursor.fetchall()
     connection.close()
     return rows
+
+import sys
+lazy_paginator = __import__('2-lazy_paginate').lazy_pagination
+
+
+try:
+    for page in lazy_paginator(100):
+        for user in page:
+            print(user)
+
+except BrokenPipeError:
+    sys.stderr.close()
