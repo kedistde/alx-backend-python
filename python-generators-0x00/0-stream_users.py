@@ -1,35 +1,8 @@
-#!/usr/bin/env python3
-import mysql.connector
-from mysql.connector import Error
+#!/usr/bin/python3
+from itertools import islice
+stream_users = __import__('0-stream_users')
 
-HOST = "localhost"
-USER = "root"
-PASSWORD = ""
-DB_NAME = "ALX_prodev"
-TABLE = "user_data"
+# iterate over the generator function and print only the first 6 rows
 
-def stream_users():
-    """
-    Generator that yields one row at a time from user_data.
-    """
-
-    try:
-        conn = mysql.connector.connect(
-            host=HOST, user=USER, password=PASSWORD, database=DB_NAME
-        )
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute(f"SELECT user_id, name, email, age FROM {TABLE}")
-        
-        for row in cursor:
-            yield row
-
-    except Error as e:
-        print(f"Error: {e}")
-    finally:
-        cursor.close()
-        conn.close()
-
-# Example usage:
-if __name__ == "__main__":
-    for user in stream_users():
-        print(user)
+for user in islice(stream_users(), 6):
+    print(user)
