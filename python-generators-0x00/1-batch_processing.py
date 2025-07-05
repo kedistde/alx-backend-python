@@ -9,11 +9,10 @@ except BrokenPipeError:
     sys.stderr.close()
 
 
-
 def stream_users_in_batches(batch_size):
    
     cursor = conn.cursor(dictionary=True)
-    cursor.execute(f"SELECT user_id, name, email, age FROM {TABLE}")
+    cursor.execute(f"SELECT user_id, name, email, age FROM user_data")
     # Loop #1: batch-fetch rows
     while True:
         batch = cursor.fetchmany(batch_size)
