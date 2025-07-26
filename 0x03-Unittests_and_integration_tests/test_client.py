@@ -20,11 +20,17 @@ class TestGithubOrgClient(unittest.TestCase):
     def test_public_repos(self):
         """Test public_repos method without license filter"""
         test_url = "https://api.github.com/orgs/google/repos"
-        with patch('client.GithubOrgClient._public_repos_url',
-                  new_callable=PropertyMock) as mock_repos_url, \
-                patch('client.GithubOrgClient.get_json') as mock_get, \
-                patch('client.GithubOrgClient.public_repos',
-                      return_value=[repo['name'] for repo in self.repos_payload]):
+        with patch(
+                'client.GithubOrgClient._public_repos_url',
+                new_callable=PropertyMock
+        ) as mock_repos_url, \
+                patch(
+                    'client.GithubOrgClient.get_json'
+                ) as mock_get, \
+                patch(
+                    'client.GithubOrgClient.public_repos',
+                    return_value=[repo['name'] for repo in self.repos_payload]
+                ):
 
             mock_repos_url.return_value = test_url
             mock_get.return_value = self.repos_payload
@@ -40,11 +46,17 @@ class TestGithubOrgClient(unittest.TestCase):
     def test_public_repos_with_license(self):
         """Test public_repos method with license filter"""
         test_url = "https://api.github.com/orgs/google/repos"
-        with patch('client.GithubOrgClient._public_repos_url',
-                  new_callable=PropertyMock) as mock_repos_url, \
-                patch('client.GithubOrgClient.get_json') as mock_get, \
-                patch('client.GithubOrgClient.public_repos',
-                      return_value=[repo['name'] for repo in self.apache_repos]):
+        with patch(
+                'client.GithubOrgClient._public_repos_url',
+                new_callable=PropertyMock
+        ) as mock_repos_url, \
+                patch(
+                    'client.GithubOrgClient.get_json'
+                ) as mock_get, \
+                patch(
+                    'client.GithubOrgClient.public_repos',
+                    return_value=[repo['name'] for repo in self.apache_repos]
+                ):
 
             mock_repos_url.return_value = test_url
             mock_get.return_value = self.repos_payload
