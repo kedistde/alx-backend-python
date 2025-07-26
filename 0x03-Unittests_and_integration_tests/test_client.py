@@ -3,7 +3,6 @@
 
 import unittest
 from unittest.mock import patch, PropertyMock
-from parameterized import parameterized
 from client import GithubOrgClient
 from fixtures import TEST_PAYLOAD
 
@@ -20,45 +19,43 @@ class TestGithubOrgClient(unittest.TestCase):
 
     def test_public_repos(self):
         """Test public_repos method without license filter"""
+        test_url = "https://api.github.com/orgs/google/repos"
         with patch('client.GithubOrgClient._public_repos_url',
-                   new_callable=PropertyMock) as mock_pub_repos_url, \
-                patch('client.GithubOrgClient.get_json') as mock_get_json, \
+                  new_callable=PropertyMock) as mock_repos_url, \
+                patch('client.GithubOrgClient.get_json') as mock_get, \
                 patch('client.GithubOrgClient.public_repos',
                       return_value=[repo['name'] for repo in self.repos_payload]):
 
-            mock_pub_repos_url.return_value = (
-                "https://api.github.com/orgs/google/repos")
-            mock_get_json.return_value = self.repos_payload
+            mock_repos_url.return_value = test_url
+            mock_get.return_value = self.repos_payload
 
             client = GithubOrgClient("google")
             result = client.public_repos()
 
-            expected_repos = [repo['name'] for repo in self.repos_payload]
-            self.assertEqual(result, expected_repos)
-            mock_pub_repos_url.assert_called_once()
-            mock_get_json.assert_called_once_with(
-                "https://api.github.com/orgs/google/repos")
+            expected = [repo['name'] for repo in self.repos_payload]
+            self.assertEqual(result, expected)
+            mock_repos_url.assert_called_once()
+            mock_get.assert_called_once_with(test_url)
 
     def test_public_repos_with_license(self):
         """Test public_repos method with license filter"""
+        test_url = "https://api.github.com/orgs/google/repos"
         with patch('client.GithubOrgClient._public_repos_url',
-                   new_callable=PropertyMock) as mock_pub_repos_url, \
-                patch('client.GithubOrgClient.get_json') as mock_get_json, \
+                  new_callable=PropertyMock) as mock_repos_url, \
+                patch('client.GithubOrgClient.get_json') as mock_get, \
                 patch('client.GithubOrgClient.public_repos',
                       return_value=[repo['name'] for repo in self.apache_repos]):
 
-            mock_pub_repos_url.return_value = (
-                "https://api.github.com/orgs/google/repos")
-            mock_get_json.return_value = self.repos_payload
+            mock_repos_url.return_value = test_url
+            mock_get.return_value = self.repos_payload
 
             client = GithubOrgClient("google")
             result = client.public_repos(license="apache-2.0")
 
-            expected_repos = [repo['name'] for repo in self.apache_repos]
-            self.assertEqual(result, expected_repos)
-            mock_pub_repos_url.assert_called_once()
-            mock_get_json.assert_called_once_with(
-                "https://api.github.com/orgs/google/repos")
+            expected = [repo['name'] for repo in self.apache_repos]
+            self.assertEqual(result, expected)
+            mock_repos_url.assert_called_once()
+            mock_get.assert_called_once_with(test_url)
 
 
 if __name__ == '__main__':
