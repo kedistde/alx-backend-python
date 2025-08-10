@@ -1,0 +1,33 @@
+# Core requirements
+Django==4.2.7
+djangorestframework==3.14.0
+
+# Database
+psycopg2-binary==2.9.7  # PostgreSQL adapter
+dj-database-url==2.0.0  # For database configuration
+
+# Authentication
+djangorestframework-simplejwt==5.2.2  # JWT authentication
+python-jose==3.3.0  # JWT utilities
+cryptography==41.0.5  # Security backend
+
+# Environment variables
+python-dotenv==1.0.0
+
+# API Documentation
+drf-yasg==1.21.5  # Swagger/OpenAPI documentation
+
+# Testing
+pytest==7.4.2
+pytest-django==4.5.2
+factory-boy==3.2.1
+
+# Code quality
+flake8==6.1.0
+black==23.9.1
+
+# CORS
+django-cors-headers==4.3.1
+
+# Async support (if needed)
+asgiref==3.7.2
