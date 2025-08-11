@@ -1,0 +1,47 @@
+#!/bin/bash
+
+# kubctl-0x01 - Scale Django app, verify pods, load test, and monitor resource usage
+
+set -e  # Exit on error
+
+DEPLOYMENT_NAME="django-app"
+NAMESPACE="default"  # Change if using a different namespace
+TARGET_REPLICAS=3
+SERVICE_PORT=8000  # Change if your service uses a different port
+SERVICE_NAME="django-service"
+
+echo "🚀 Scaling deployment '$DEPLOYMENT_NAME' to $TARGET_REPLICAS replicas..."
+kubectl scale deployment "$DEPLOYMENT_NAME" --replicas=$TARGET_REPLICAS
+
+echo "⏳ Waiting for pods to be ready..."
+kubectl rollout status deployment "$DEPLOYMENT_NAME"
+
+echo "📦 Getting list of running pods..."
+kubectl get pods -l app=$DEPLOYMENT_NAME
+
+# Check if wrk is installed
+if ! command -v wrk &> /dev/null; then
+    echo "❌ 'wrk' is not installed. Please install it first:"
+    echo "👉 https://github.com/wg/wrk"
+    exit 1
+fi
+
+# Start a port-forward to access the internal service (ClusterIP)
+echo "🔌 Starting port-forward in background..."
+kubectl port-forward service/$SERVICE_NAME $SERVICE_PORT:$SERVICE_PORT &
+PORT_FWD_PID=$!
+sleep 3  # Give port-forward time to establish
+
+# Perform load test
+echo "🧪 Running load test with wrk (10 seconds, 10 threads, 100 connections)..."
+wrk -t10 -c100 -d10s http://localhost:$SERVICE_PORT
+
+# Kill port-forward
+echo "🛑 Stopping port-forward..."
+kill $PORT_FWD_PID
+
+# Monitor resource usage
+echo "📊 Resource usage:"
+kubectl top pods
+
+echo "✅ Script completed."
