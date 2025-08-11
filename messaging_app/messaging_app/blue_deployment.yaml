@@ -10,3 +10,9 @@ spec:
       labels:
         app: django
         version: blue
+        spec:
+  containers:
+    - name: django-container
+      image: your-dockerhub-username/your-django-image:2.0
+      ports:
+        - containerPort: 8000
