@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# kubctl-0x03 - Perform a rolling update with monitoring and availability check
+
+set -e
+
+DEPLOYMENT="django-blue"
+SERVICE_PORT=8000
+NAMESPACE=default
+
+echo "🚀 Applying updated blue deployment (version 2.0)..."
+kubectl apply -f blue_deployment.yaml
+
+echo "📈 Monitoring rollout status for deployment '$DEPLOYMENT'..."
+kubectl rollout status deployment "$DEPLOYMENT"
+
+echo "🔁 Starting curl loop to check app availability..."
+
+# Start port-forwarding the service in the background
+kubectl port-forward service/django-service $SERVICE_PORT:$SERVICE_PORT > /dev/null 2>&1 &
+PF_PID=$!
+sleep 3  # Give it a moment to start
+
+# Perform curl loop in background (simulate continuous traffic)
+for i in {1..10}; do
+    echo -n "Request $i: "
+    curl -s -o /dev/null -w "%{http_code}\n" http://localhost:$SERVICE_PORT/api/
+    sleep 1
+done
+
+# Kill the port-forward process
+kill $PF_PID
+
+echo "✅ Checking current running pods..."
+kubectl get pods -l app=django,version=blue
+
+echo "🎉 Rolling update complete."
