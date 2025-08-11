@@ -1,0 +1,12 @@
+metadata:
+  name: django-green
+spec:
+  selector:
+    matchLabels:
+      app: django
+      version: green
+  template:
+    metadata:
+      labels:
+        app: django
+        version: green
