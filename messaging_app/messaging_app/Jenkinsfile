@@ -4,6 +4,93 @@ pipeline {
     environment {
         DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
         GITHUB_CREDENTIALS = credentials('github-credentials')
+        PROJECT_DIR = 'messaging_app'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', 
+                credentialsId: 'github-credentials', 
+                url: 'https://github.com/your-username/alx-backend-python.git'
+                // Replace with your actual GitHub repository URL
+            }
+        }
+        
+        stage('Set up Python') {
+            steps {
+                dir("${env.PROJECT_DIR}") {
+                    sh '''
+                        python -m venv venv
+                        . venv/bin/activate
+                        pip install --upgrade pip
+                        pip install -r requirements.txt
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                dir("${env.PROJECT_DIR}") {
+                    sh '''
+                        . venv/bin/activate
+                        # Install pytest if not in requirements.txt
+                        pip install pytest pytest-django
+                        pytest --junitxml=test-results/junit.xml
+                    '''
+                }
+            }
+            post {
+                always {
+                    junit 'messaging_app/test-results/*.xml' // Publish test results
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                dir("${env.PROJECT_DIR}") {
+                    script {
+                        docker.build("your-dockerhub-username/messaging-app:${env.BUILD_ID}")
+                        // Replace with your Docker Hub username
+                    }
+                }
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                dir("${env.PROJECT_DIR}") {
+                    script {
+                        docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                            docker.image("your-dockerhub-username/messaging-app:${env.BUILD_ID}").push()
+                            docker.image("your-dockerhub-username/messaging-app:latest").push()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs() // Clean workspace after build
+        }
+        failure {
+            emailext (
+                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: "Check console output at ${env.BUILD_URL}",
+                to: "your-email@example.com" // Replace with your email
+            )
+        }
+    }
+}pipeline {
+    agent any
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        GITHUB_CREDENTIALS = credentials('github-credentials')
     }
     
     stages {
