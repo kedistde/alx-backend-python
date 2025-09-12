@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+    
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('docker-hub-credentials')
+        GITHUB_CREDENTIALS = credentials('github-credentials')
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                git branch: 'main', 
+                credentialsId: 'github-credentials', 
+                url: 'https://github.com/your-username/alx-backend-python.git'
+                // Replace with your actual GitHub repository URL
+            }
+        }
+        
+        stage('Set up Python') {
+            steps {
+                sh '''
+                    python -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                sh '''
+                    . venv/bin/activate
+                    python manage.py test --noinput
+                    # Alternative if using pytest:
+                    # pytest --junitxml=test-results/junit.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'test-results/*.xml' // Publish test results
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("your-dockerhub-username/messaging-app:${env.BUILD_ID}")
+                    // Replace with your Docker Hub username
+                }
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-credentials') {
+                        docker.image("your-dockerhub-username/messaging-app:${env.BUILD_ID}").push()
+                        docker.image("your-dockerhub-username/messaging-app:latest").push()
+                    }
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            cleanWs() // Clean workspace after build
+        }
+        failure {
+            emailext (
+                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+                body: "Check console output at ${env.BUILD_URL}",
+                to: "your-email@example.com" // Replace with your email
+            )
+        }
+    }
+}
