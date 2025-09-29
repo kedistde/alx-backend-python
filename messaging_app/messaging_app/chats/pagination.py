@@ -1,12 +1,15 @@
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
-class CustomPagination(PageNumberPagination):
+class MessagePagination(PageNumberPagination):
+    """
+    Custom pagination for messages - 20 messages per page
+    """
     page_size = 20
     page_size_query_param = 'page_size'
     max_page_size = 100
     
     def get_paginated_response(self, data):
-        from rest_framework.response import Response
         return Response({
             'count': self.page.paginator.count,
             'next': self.get_next_link(),
