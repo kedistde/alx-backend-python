@@ -8,14 +8,12 @@ from django.db.models import Q
 from .models import Conversation, Message
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
-from .filters import MessageFilter, ConversationFilter
-from .pagination import CustomPagination
+from .filters import MessageFilter
+from .pagination import MessagePagination
 
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
-    filter_backends = [DjangoFilterBackend]
-    filterset_class = ConversationFilter
     
     def get_queryset(self):
         return Conversation.objects.filter(participants=self.request.user)
@@ -32,31 +30,37 @@ class ConversationViewSet(viewsets.ModelViewSet):
         conversation = self.get_object()
         messages = conversation.messages.all()
         
-        # Apply filtering and pagination
-        filtered_messages = MessageFilter(request.GET, queryset=messages)
-        paginator = CustomPagination()
-        page = paginator.paginate_queryset(filtered_messages.qs, request)
+        # Apply filtering
+        message_filter = MessageFilter(request.GET, queryset=messages, request=request)
+        filtered_messages = message_filter.qs
+        
+        # Apply pagination
+        paginator = MessagePagination()
+        page = paginator.paginate_queryset(filtered_messages, request)
         
         if page is not None:
             serializer = MessageSerializer(page, many=True)
             return paginator.get_paginated_response(serializer.data)
         
-        serializer = MessageSerializer(messages, many=True)
+        serializer = MessageSerializer(filtered_messages, many=True)
         return Response(serializer.data)
     
     @action(detail=True, methods=['post'])
     def mark_all_as_read(self, request, pk=None):
         conversation = self.get_object()
         messages = conversation.messages.filter(is_read=False).exclude(sender=request.user)
-        messages.update(is_read=True)
-        return Response({'status': 'All messages marked as read'})
+        updated_count = messages.update(is_read=True)
+        return Response({
+            'status': f'{updated_count} messages marked as read',
+            'updated_count': updated_count
+        })
 
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
     filter_backends = [DjangoFilterBackend]
     filterset_class = MessageFilter
-    pagination_class = CustomPagination
+    pagination_class = MessagePagination
     
     def get_queryset(self):
         # Only show messages from conversations where user is a participant
@@ -69,7 +73,8 @@ class MessageViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def mark_as_read(self, request, pk=None):
         message = self.get_object()
-        if message.sender != request.user:
+        if message.sender != request.user and not message.is_read:
             message.is_read = True
             message.save()
-        return Response({'status': 'Message marked as read'})
+            return Response({'status': 'Message marked as read'})
+        return Response({'status': 'Message already read or sent by you'})
