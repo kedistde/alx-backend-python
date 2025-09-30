@@ -16,9 +16,6 @@ router.register(r'users', UserViewSet)
 router.register(r'conversations', ConversationViewSet)
 router.register(r'messages', MessageViewSet)
 
-urlpatterns = [
-    path('', include(router.urls)),
-]
 
 router = routers.DefaultRouter()
 router.register(r'conversations', ConversationViewSet, basename='conversation')
@@ -27,6 +24,9 @@ router.register(r'messages', MessageViewSet, basename='message')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/', include('chats.urls')),
+    
+    path('', include(router.urls)),
     
     # JWT Authentication endpoints
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
