@@ -5,12 +5,61 @@ from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.db.models import Q
 
-from .models import Conversation, Message
-from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsParticipantOfConversation
 from .filters import MessageFilter
 from .pagination import MessagePagination
 
+from django.shortcuts import get_object_or_404
+from .models import User, Conversation, Message
+from .serializers import (
+    UserSerializer, ConversationSerializer, MessageSerializer,
+    ConversationCreateSerializer, MessageCreateSerializer
+)
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+class ConversationViewSet(viewsets.ModelViewSet):
+    queryset = Conversation.objects.all()
+    
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return ConversationCreateSerializer
+        return ConversationSerializer
+    
+    def create(self, request):
+        serializer = ConversationCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            conversation = serializer.save()
+            return Response(ConversationSerializer(conversation).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @action(detail=True, methods=['post'])
+    def send_message(self, request, pk=None):
+        conversation = self.get_object()
+        sender = request.user
+        
+        serializer = MessageCreateSerializer(
+            data=request.data,
+            context={'conversation': conversation, 'sender': sender}
+        )
+        
+        if serializer.is_valid():
+            message = serializer.save()
+            return Response(MessageSerializer(message).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class MessageViewSet(viewsets.ModelViewSet):
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    
+    def get_queryset(self):
+        queryset = Message.objects.all()
+        conversation_id = self.request.query_params.get('conversation_id')
+        if conversation_id:
+            queryset = queryset.filter(conversation__conversation_id=conversation_id)
+        return queryset
 class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]
