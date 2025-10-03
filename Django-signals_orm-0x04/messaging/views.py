@@ -3,7 +3,22 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages as django_messages
 from django.contrib.auth.models import User
 from .models import Message, MessageHistory
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.views import View
 
+# For function-based views
+@cache_page(60)
+def your_view_function(request):
+    # your view logic
+    pass
+
+# For class-based views
+class YourView(View):
+    @method_decorator(cache_page(60))
+    def get(self, request, *args, **kwargs):
+        # your view logic
+        pass
 @login_required
 def delete_user_account(request):
     """
